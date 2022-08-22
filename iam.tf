@@ -26,6 +26,7 @@ data "aws_iam_policy_document" "this" {
       "logs:PutLogEvents"
     ]
 
+    # This only allows creating log streams and putting log events in this specific log group
     #tfsec:ignore:aws-iam-no-policy-wildcards
     resources = ["${aws_cloudwatch_log_group.this.arn}:*", ]
   }
@@ -53,6 +54,13 @@ data "aws_iam_policy_document" "this" {
         "ec2:AssignPrivateIpAddresses",
         "ec2:UnassignPrivateIpAddresses",
       ]
+
+      # This policy is a narrowed-down version of the AWS-Managed policy.
+      # https://us-east-1.console.aws.amazon.com/iam/home#/policies/arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole$jsonEditor
+      # 
+      # It cannot be more narrow than this, otherwise AWS Lambda won't be able to
+      # associate the Lambda Function to the VPC.
+      #tfsec:ignore:aws-iam-no-policy-wildcards
       resources = ["*"]
     }
   }
