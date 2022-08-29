@@ -27,7 +27,7 @@ data "archive_file" "artifact_dir" {
 
   type        = "zip"
   source_dir  = var.local_artifact.path
-  output_path = "${path.module}/.artifacts/handler.zip"
+  output_path = "${path.module}/.artifacts/${var.function_name}.zip"
 }
 # Upload the zipped artifact to S3
 resource "aws_s3_object" "artifact_dir" {
