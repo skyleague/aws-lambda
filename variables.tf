@@ -24,6 +24,11 @@ variable "local_artifact" {
     condition     = var.local_artifact == null || try(var.local_artifact.type, "") != "zip" || can(regex("\\.zip$", var.local_artifact.path))
     error_message = "Invalid file for type=\"zip\"."
   }
+
+  validation {
+    condition     = var.local_artifact == null || try(var.local_artifact.s3_bucket, null) != null || try(var.local_artifact.s3_prefix, null) == null
+    error_message = "Invalid \"local_artifact\", \"s3_bucket\" should not be null when \"s3_prefix\" is provided."
+  }
 }
 variable "s3_artifact" {
   description = "Pre-existing artifact stored in S3. Version ID is recommended but optional (provide version_id = null to omit it)."

@@ -35,10 +35,11 @@ resource "aws_lambda_function" "this" {
     size = var.ephemeral_storage
   }
 
-  s3_bucket         = local.artifact.bucket
-  s3_key            = local.artifact.key
-  s3_object_version = local.artifact.version_id
-  source_code_hash  = coalesce(try(local.artifact.source_code_hash, null), base64encode(local.artifact.etag))
+  s3_bucket         = try(local.artifact.bucket, null)
+  s3_key            = try(local.artifact.key, null)
+  s3_object_version = try(local.artifact.version_id, null)
+  source_code_hash  = coalesce(try(local.artifact.source_code_hash, null), try(base64encode(local.artifact.etag), null), try(filebase64sha256(local.artifact_file), null))
+  filename          = local.artifact == null ? local.artifact_file : null
 
   dynamic "dead_letter_config" {
     for_each = var.dead_letter_arn != null ? [var.dead_letter_arn] : []

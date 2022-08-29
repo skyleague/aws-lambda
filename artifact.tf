@@ -31,7 +31,7 @@ data "archive_file" "artifact_dir" {
 }
 # Upload the zipped artifact to S3
 resource "aws_s3_object" "artifact_dir" {
-  count = var.local_artifact == null ? 0 : var.local_artifact.type == "dir" ? 1 : 0
+  count = var.local_artifact == null ? 0 : var.local_artifact.type == "dir" && var.local_artifact.s3_bucket != null ? 1 : 0
 
   bucket      = var.local_artifact.s3_bucket
   key         = "${local.s3_artifact_prefix}/handler.zip"
@@ -48,7 +48,7 @@ resource "aws_s3_object" "artifact_dir" {
 
 # Upload the pre-existing artifact zip to S3
 resource "aws_s3_object" "artifact_zip" {
-  count = var.local_artifact == null ? 0 : var.local_artifact.type == "zip" ? 1 : 0
+  count = var.local_artifact == null ? 0 : var.local_artifact.type == "zip" && var.local_artifact.s3_bucket != null ? 1 : 0
 
   bucket      = var.local_artifact.s3_bucket
   key         = "${local.s3_artifact_prefix}/${basename(var.local_artifact.path)}"
@@ -65,5 +65,6 @@ resource "aws_s3_object" "artifact_zip" {
 
 locals {
   # Choose the correct artifact according to the input definition
-  artifact = var.local_artifact == null ? data.aws_s3_object.artifact[0] : var.local_artifact.type == "zip" ? aws_s3_object.artifact_zip[0] : aws_s3_object.artifact_dir[0]
+  artifact      = try(data.aws_s3_object.artifact[0], aws_s3_object.artifact_zip[0], aws_s3_object.artifact_dir[0], null)
+  artifact_file = var.local_artifact != null && local.artifact == null ? try(data.archive_file.artifact_dir[0].output_path, var.local_artifact.path, null) : null
 }
