@@ -67,4 +67,10 @@ locals {
   # Choose the correct artifact according to the input definition
   artifact      = try(data.aws_s3_object.artifact[0], aws_s3_object.artifact_zip[0], aws_s3_object.artifact_dir[0], null)
   artifact_file = var.local_artifact != null && local.artifact == null ? try(data.archive_file.artifact_dir[0].output_path, var.local_artifact.path, null) : null
+  source_code_hash = coalesce(
+    try(data.archive_file.artifact_dir[0].output_base64sha256, null),
+    try(filebase64sha256(local.artifact_file), null),
+    try(local.artifact.source_hash, local.artifact.tags.SourceHash, null),
+    try(base64encode(local.artifact.etag), null),
+  )
 }

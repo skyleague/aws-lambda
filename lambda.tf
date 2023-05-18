@@ -38,7 +38,7 @@ resource "aws_lambda_function" "this" {
   s3_bucket         = try(local.artifact.bucket, null)
   s3_key            = try(local.artifact.key, null)
   s3_object_version = try(local.artifact.version_id, null)
-  source_code_hash  = coalesce(try(local.artifact.source_hash, null), try(base64encode(local.artifact.etag), null), try(filebase64sha256(local.artifact_file), null))
+  source_code_hash  = local.source_code_hash
   filename          = local.artifact == null ? local.artifact_file : null
 
   dynamic "dead_letter_config" {
