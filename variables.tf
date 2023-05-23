@@ -33,11 +33,28 @@ variable "local_artifact" {
 variable "s3_artifact" {
   description = "Pre-existing artifact stored in S3. Version ID is recommended but optional (provide version_id = null to omit it)."
   type = object({
+    type       = optional(string, "existing")
     bucket     = string
     key        = string
-    version_id = string
+    version_id = optional(string)
+
+    copy_source = optional(object({
+      bucket     = string
+      key        = string
+      version_id = optional(string)
+    }))
   })
   default = null
+
+  validation {
+    condition     = var.s3_artifact == null || try(var.s3_artifact.type, null) == "existing" || try(var.s3_artifact.type, null) == "copy"
+    error_message = "Invalid \"type\" property for s3_artifact, should be \"existing\" or \"copy\"."
+  }
+
+  validation {
+    condition     = try(var.s3_artifact.type, "existing") == "existing" || try(var.s3_artifact.copy_source, null) != null
+    error_message = "Invalid \"s3_artifact\", \"copy_source\" should not be null when \"type\" is \"copy\"."
+  }
 }
 variable "runtime" {
   default = "nodejs16.x"

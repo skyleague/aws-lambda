@@ -1,10 +1,10 @@
 # When s3_artifact is provided, fetch the metadata of the object
 data "aws_s3_object" "artifact" {
-  count = var.s3_artifact == null ? 0 : 1
+  count = var.s3_artifact != null ? 1 : 0
 
-  bucket     = var.s3_artifact.bucket
-  key        = var.s3_artifact.key
-  version_id = var.s3_artifact.version_id
+  bucket     = try(var.s3_artifact.copy_source.bucket, var.s3_artifact.bucket)
+  key        = try(var.s3_artifact.copy_source.key, var.s3_artifact.key)
+  version_id = try(var.s3_artifact.copy_source.version_id, var.s3_artifact.version_id)
 
   lifecycle {
     precondition {
@@ -12,6 +12,17 @@ data "aws_s3_object" "artifact" {
       error_message = "Variable s3_artifact should not be provided when local_artifact is provided"
     }
   }
+}
+
+resource "aws_s3_object_copy" "artifact_copy" {
+  count = try(var.s3_artifact.type, "existing") == "copy" ? 1 : 0
+
+  bucket = var.s3_artifact.bucket
+  key    = var.s3_artifact.key
+
+  source = "${var.s3_artifact.copy_source.bucket}/${var.s3_artifact.copy_source.key}"
+
+  tagging_directive = "COPY"
 }
 
 locals {
@@ -65,12 +76,14 @@ resource "aws_s3_object" "artifact_zip" {
 
 locals {
   # Choose the correct artifact according to the input definition
-  artifact      = try(data.aws_s3_object.artifact[0], aws_s3_object.artifact_zip[0], aws_s3_object.artifact_dir[0], null)
+  artifact      = try(aws_s3_object_copy.artifact_copy[0], data.aws_s3_object.artifact[0], aws_s3_object.artifact_zip[0], aws_s3_object.artifact_dir[0], null)
   artifact_file = var.local_artifact != null && local.artifact == null ? try(data.archive_file.artifact_dir[0].output_path, var.local_artifact.path, null) : null
   source_code_hash = coalesce(
     try(data.archive_file.artifact_dir[0].output_base64sha256, null),
     try(filebase64sha256(local.artifact_file), null),
-    try(local.artifact.source_hash, local.artifact.tags.SourceHash, null),
+    try(local.artifact.source_hash, null),
+    try(data.aws_s3_object.artifact[0].tags.SourceHash, null),
+    try(local.artifact.tags.SourceHash, null),
     try(base64encode(local.artifact.etag), null),
   )
 }
