@@ -70,7 +70,8 @@ locals {
   source_code_hash = coalesce(
     try(data.archive_file.artifact_dir[0].output_base64sha256, null),
     try(filebase64sha256(local.artifact_file), null),
-    try(local.artifact.source_hash, local.artifact.tags.SourceHash, null),
+    try(local.artifact.source_hash, null),
+    try(local.artifact.tags.SourceHash, null),
     try(base64encode(local.artifact.etag), null),
   )
 }
