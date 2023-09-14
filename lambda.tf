@@ -2,6 +2,7 @@ locals {
   environment = merge(
     can(regex("^nodejs", var.runtime)) ? {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      NODE_OPTIONS                        = "--enable-source-maps"
     } : {},
     var.environment,
   )
