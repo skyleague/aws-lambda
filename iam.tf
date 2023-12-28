@@ -11,7 +11,8 @@ data "aws_iam_policy_document" "assume_role" {
 
 resource "aws_iam_role" "this" {
   path        = "/lambda/"
-  name_prefix = var.function_name
+  name        = var.role_name
+  name_prefix = var.role_name != null ? null : var.function_name
 
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
