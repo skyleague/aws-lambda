@@ -109,6 +109,11 @@ variable "log_kms_key_id" {
   default     = null
 }
 
+variable "role_name" {
+  type    = string
+  default = null
+}
+
 variable "existing_policy_arns" {
   type    = set(string)
   default = []
