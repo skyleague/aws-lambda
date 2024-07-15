@@ -123,3 +123,8 @@ variable "inline_policies" {
   type    = map(object({ json = string }))
   default = {}
 }
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

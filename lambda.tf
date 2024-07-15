@@ -65,6 +65,8 @@ resource "aws_lambda_function" "this" {
     }
   }
 
+  tags = var.tags
+
   lifecycle {
     precondition {
       condition     = var.s3_artifact != null || var.local_artifact != null
